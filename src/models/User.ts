@@ -7,9 +7,6 @@
  */
 
 import * as oMongoose from 'mongoose';
-import reservedKeywords from '../utils/reservedKeywords';
-import config from '../config';
-import { on } from 'events';
 
 const oneDay = 60 * 60 * 24;
 

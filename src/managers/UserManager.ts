@@ -1,8 +1,5 @@
 import oBcrypt from 'bcryptjs';
 import { IUser, User as oUser } from '../models/User';
-import reservedKeywords from '../utils/reservedKeywords';
-import config from '../config';
-import * as oService from '../services';
 
 /**
  * 
@@ -24,8 +21,7 @@ export const create = function (userData: IUser, callback: (errorCode: number|nu
             {
                 email: userData.email,
                 username: userData.username,
-                password: oBcrypt.hashSync(userData.password),
-                status: reservedKeywords.userStatusEnum[0],
+                password: oBcrypt.hashSync(userData.password)
             }
         );
         user.save().then((user: IUser) => {
@@ -65,51 +61,18 @@ export const login = function (email: string, password: string, callback: (error
                 return callback(24, 'find_user_fail_for_login', 500, 'An error occurred for an unknown reason. Please contact the administrator.', null);
             }
             if (user) {
-                if (user.status !== reservedKeywords.userStatusEnum[0]) {
-                    return callback(24, 'unactivated_user', 403, 'User is not availabe.', null);
-                } else {
-                    oBcrypt.compare(password, user.password, function (error, result) {
-                        if (result === true) {
-                            return callback(null, null, 200, null, user);
-                        } else {
-                            return callback(24, 'wrong_password', 422, 'Given password is wrong.', null);
-                        }
-                    });
-                }
+                oBcrypt.compare(password, user.password, function (error, result) {
+                    if (result === true) {
+                        return callback(null, null, 200, null, user);
+                    } else {
+                        return callback(24, 'wrong_password', 422, 'Given password is wrong.', null);
+                    }
+                });
+                
             } else {
                 return callback(24, 'find_user_fail_for_login', 404, 'Unable to find the user.', null);
             }
         });
-    } catch (error) {
-        return callback(24, 'function_fail', 500, 'An error occurred for an unknown reason. Please contact the administrator.', null);
-    }
-}
-
-/**
- * 
- * @param userDocId userDoc Id of the user
- * @param callback Callback function for to notify the result 
- * @returns callback()
- * 
- * @decription This function is used to activate the user account after email verification.
- */
-export const emailAuthentcationCallback = function (userDocId: string, callback: (errorCode: number|null, shortMessage: string|null, httpCode: number, description: string|null, user: IUser|null) => void) { 
-    try {
-        oUser.findOneAndUpdate(
-            {id: userDocId}, 
-            {
-                status: reservedKeywords.userStatusEnum[1], 
-                expireAt: new Date(9999, 12,31)
-            }, function (error: Error, user: IUser) {
-                if (error) {
-                    return callback(24, 'update_user_fail', 500, 'An error occurred for an unknown reason. Please contact the administrator.', null);
-                }
-                if (user) {
-                    return callback(null, null, 200, null, user);
-                } else {
-                    return callback(24, 'update_user_fail', 404, 'Unable to find the user.', null);
-                }
-        }); 
     } catch (error) {
         return callback(24, 'function_fail', 500, 'An error occurred for an unknown reason. Please contact the administrator.', null);
     }
